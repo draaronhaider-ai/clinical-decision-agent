@@ -73,7 +73,9 @@ def risk_score_node(state: AgentState) -> dict:
     print(f"[risk_score] Extracting variables and calculating score...")
     presentation = state["presentation"].lower()
     pe_indicators = ["pleuritic", "flight", "ocp", "dvt", "haemoptysis", "leg swelling"]
+    pneumonia_indicators = ["pneumonia", "consolidation", "productive cough", "lobar", "cap", "lrti", "lower respiratory"]
     use_wells = any(indicator in presentation for indicator in pe_indicators)
+    use_curb65 = any(indicator in presentation for indicator in pneumonia_indicators)
 
     if use_wells:
         prompt = (
@@ -91,27 +93,29 @@ def risk_score_node(state: AgentState) -> dict:
             score_name = "Wells PE Score"
         except Exception as e:
             return {"reasoning_steps": [f"Risk score extraction failed: {e}"], "risk_score_result": {}}
-    else:
+    elif use_curb65:
         prompt = (
-            "You are a clinical assistant. Extract HEART score variables from this presentation. "
-            "Return ONLY a JSON object with these exact integer fields (0, 1, or 2 only): "
-            '{"history": 0, "ecg": 0, "age": 0, "risk_factors": 0, "troponin": 0} '
-            "history: 0=slightly suspicious, 1=moderately suspicious, 2=highly suspicious for ACS. "
-            "ecg: 0=normal, 1=non-specific changes, 2=significant ST deviation. "
-            "age: 0=under 45, 1=45 to 64, 2=65 or over. "
-            "risk_factors: 0=none, 1=one or two, 2=three or more or known atherosclerotic disease. "
-            "troponin: 0=normal or not mentioned, 1=one to three times normal, 2=more than three times normal. "
+            "You are a clinical assistant. Extract CURB-65 score variables from this presentation. "
+            "Return ONLY a JSON object with these exact boolean fields (true/false): "
+            '{"confusion": false, "urea_over_7": false, "respiratory_rate_over_30": false, '
+            '"low_blood_pressure": false, "age_over_65": false} '
+            "confusion: new onset confusion or AMTS <= 8. "
+            "urea_over_7: blood urea > 7 mmol/L (use false if not mentioned). "
+            "respiratory_rate_over_30: RR >= 30 breaths/min. "
+            "low_blood_pressure: systolic BP < 90 or diastolic <= 60. "
+            "age_over_65: age 65 or over. "
             f"Presentation: {state['presentation']} Return only the JSON, no explanation."
         )
         response = llm_complete(prompt)
         try:
             clean = response.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-            result = calculate_heart_score(**json.loads(clean))
-            score_name = "HEART Score"
+            from tools.risk_scores import calculate_curb65
+            result = calculate_curb65(**json.loads(clean))
+            score_name = "CURB-65"
         except Exception as e:
             return {"reasoning_steps": [f"Risk score extraction failed: {e}"], "risk_score_result": {}}
 
-    risk_level = result.get("risk_category") or result.get("probability", "N/A")
+    risk_level = result.get("risk_category") or result.get("probability") or result.get("severity", "N/A")
     result["score_name"] = score_name
     return {"risk_score_result": result, "reasoning_steps": [f"{score_name}: {result['score']} — {risk_level} risk"]}
 

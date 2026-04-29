@@ -161,7 +161,59 @@ def calculate_wells_pe_score(
             "malignancy": malignancy,
         }
     }
- 
+
+# ---------------------------------------------------------------------------
+# CURB-65
+# ---------------------------------------------------------------------------
+
+def calculate_curb65(
+    confusion: bool,
+    urea_over_7: bool,
+    respiratory_rate_over_30: bool,
+    low_blood_pressure: bool,
+    age_over_65: bool,
+) -> dict:
+    """
+    Calculates CURB-65 score for pneumonia severity assessment.
+
+    Parameters:
+        confusion: New onset confusion (AMTS <= 8)
+        urea_over_7: Blood urea nitrogen > 7 mmol/L
+        respiratory_rate_over_30: Respiratory rate >= 30 breaths/min
+        low_blood_pressure: Systolic BP < 90 or diastolic BP <= 60 mmHg
+        age_over_65: Age >= 65 years
+
+    Each parameter scores 1 point if True.
+    """
+    score = sum([confusion, urea_over_7, respiratory_rate_over_30,
+                 low_blood_pressure, age_over_65])
+
+    if score <= 1:
+        severity = "Low"
+        action = "Consider home treatment. 30-day mortality ~1.5%."
+        mortality = "~1.5% 30-day mortality"
+    elif score == 2:
+        severity = "Moderate"
+        action = "Consider hospital admission. 30-day mortality ~9.2%."
+        mortality = "~9.2% 30-day mortality"
+    else:
+        severity = "High"
+        action = "Urgent hospital admission. Consider ITU if score 4-5. 30-day mortality ~22%."
+        mortality = "~22% 30-day mortality"
+
+    return {
+        "score": score,
+        "severity": severity,
+        "recommended_action": action,
+        "mortality": mortality,
+        "breakdown": {
+            "confusion": confusion,
+            "urea_over_7": urea_over_7,
+            "respiratory_rate_over_30": respiratory_rate_over_30,
+            "low_blood_pressure": low_blood_pressure,
+            "age_over_65": age_over_65,
+        }
+    }
  
 # ---------------------------------------------------------------------------
 # Quick test

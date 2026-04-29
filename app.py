@@ -219,10 +219,12 @@ with st.sidebar:
     <div style="font-size: 0.75rem; color: #556070; line-height: 1.7; font-family: 'IBM Plex Mono', monospace;">
     <strong style="color: #7a8899;">GUIDELINES</strong><br>
     NICE CG95 — Chest Pain<br>
+    NICE NG250 - Pneumonia<br>
     <br>
     <strong style="color: #7a8899;">RISK SCORES</strong><br>
     HEART Score<br>
     Wells PE Score<br>
+    CURB-65<br>
     <br>
     <strong style="color: #7a8899;">TOOLS</strong><br>
     OpenFDA Drug Check<br>
@@ -283,6 +285,7 @@ with col_input:
     examples = {
         "ACS (moderate risk)": "45M, central chest pain radiating to left arm, onset 90 minutes ago, diaphoresis, PMH: T2DM, HTN, ex-smoker. Current meds: metformin, ramipril.",
         "Suspected PE": "28F, sharp pleuritic chest pain, SOB, recent long-haul flight, no PMH, on OCP.",
+        "Pneumonia (high severity)": "78F, productive cough, fever 38.9, RR 32, BP 85/50, confused, PMH: COPD. No recent antibiotics.",
         "Immediate escalation": "72M, hypotensive BP 70/40, central chest pain, diaphoretic, unresponsive to voice.",
     }
 
