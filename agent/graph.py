@@ -63,7 +63,15 @@ def red_flag_check_node(state: AgentState) -> dict:
 
 
 def guideline_retrieval_node(state: AgentState) -> dict:
-    query = f"Assessment and management recommendations for: {state['presentation']}"
+    presentation_lower = state["presentation"].lower()
+    pneumonia_indicators = ["pneumonia", "productive cough", "fever", "cough", "sputum", "lrti"]
+    pe_indicators = ["pleuritic", "flight", "ocp", "dvt"]
+    if any(ind in presentation_lower for ind in pneumonia_indicators):
+        query = f"NICE pneumonia severity assessment CURB-65 antibiotic recommendations: {state['presentation']}"
+    elif any(ind in presentation_lower for ind in pe_indicators):
+        query = f"NICE pulmonary embolism Wells score assessment: {state['presentation']}"
+    else:
+        query = f"NICE chest pain ACS assessment recommendations: {state['presentation']}"
     print(f"[guideline_retrieval] Querying guidelines...")
     result = retrieve_guideline(query)
     return {"retrieved_guidelines": result, "reasoning_steps": [f"Guideline retrieval: retrieved {len(result)} characters of relevant NICE guidance"]}
@@ -73,7 +81,7 @@ def risk_score_node(state: AgentState) -> dict:
     print(f"[risk_score] Extracting variables and calculating score...")
     presentation = state["presentation"].lower()
     pe_indicators = ["pleuritic", "flight", "ocp", "dvt", "haemoptysis", "leg swelling"]
-    pneumonia_indicators = ["pneumonia", "consolidation", "productive cough", "lobar", "cap", "lrti", "lower respiratory"]
+    pneumonia_indicators = ["pneumonia", "consolidation", "productive cough", "lobar", "cap", "lrti", "lower respiratory", "fever", "cough", "sputum", "crackles", "bronchial breathing"]
     use_wells = any(indicator in presentation for indicator in pe_indicators)
     use_curb65 = any(indicator in presentation for indicator in pneumonia_indicators)
 
@@ -114,6 +122,25 @@ def risk_score_node(state: AgentState) -> dict:
             score_name = "CURB-65"
         except Exception as e:
             return {"reasoning_steps": [f"Risk score extraction failed: {e}"], "risk_score_result": {}}
+    else:
+        prompt = (
+            "You are a clinical assistant. Extract HEART score variables from this presentation. "
+            "Return ONLY a JSON object with these exact integer fields (0, 1, or 2 only): "
+            '{"history": 0, "ecg": 0, "age": 0, "risk_factors": 0, "troponin": 0} '
+            "history: 0=slightly suspicious, 1=moderately suspicious, 2=highly suspicious for ACS. "
+            "ecg: 0=normal, 1=non-specific changes, 2=significant ST deviation. "
+            "age: 0=under 45, 1=45 to 64, 2=65 or over. "
+            "risk_factors: 0=none, 1=one or two, 2=three or more or known atherosclerotic disease. "
+            "troponin: 0=normal or not mentioned, 1=one to three times normal, 2=more than three times normal. "
+            f"Presentation: {state['presentation']} Return only the JSON, no explanation."
+        )
+        response = llm_complete(prompt)
+        try:
+            clean = response.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+            result = calculate_heart_score(**json.loads(clean))
+            score_name = "HEART Score"
+        except Exception as e:
+            return {"reasoning_steps": [f"Risk score extraction failed: {e}"], "risk_score_result": {}}
 
     risk_level = result.get("risk_category") or result.get("probability") or result.get("severity", "N/A")
     result["score_name"] = score_name
@@ -135,7 +162,7 @@ def recommendation_node(state: AgentState) -> dict:
     risk = state.get("risk_score_result", {})
     score_name = risk.get("score_name", "Risk Score")
     score_value = risk.get("score", "N/A")
-    risk_level = risk.get("risk_category") or risk.get("probability", "N/A")
+    risk_level = risk.get("risk_category") or risk.get("probability") or risk.get("severity", "N/A")
     action = risk.get("recommended_action", "N/A")
     prompt = (
         "You are a senior clinical decision support system designed for use within the UK NHS. "
@@ -166,7 +193,7 @@ def output_node(state: AgentState) -> dict:
         risk = state.get("risk_score_result", {})
         score_name = risk.get("score_name", "Risk Score")
         score_value = risk.get("score", "N/A")
-        risk_level = risk.get("risk_category") or risk.get("probability", "N/A")
+        risk_level = risk.get("risk_category") or risk.get("probability") or risk.get("severity", "N/A")
         action = risk.get("recommended_action", "N/A")
         mace_or_prev = risk.get("mace_risk") or risk.get("pe_prevalence", "")
         output = f"""SITUATION

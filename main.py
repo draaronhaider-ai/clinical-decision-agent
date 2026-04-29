@@ -19,7 +19,8 @@ load_dotenv()
 TEST_PRESENTATIONS = [
     "45M, central chest pain radiating to left arm, onset 90 minutes ago, diaphoresis, PMH: T2DM, HTN, ex-smoker. Current meds: metformin, ramipril.",
     "28F, sharp pleuritic chest pain, SOB, recent long-haul flight, no PMH, on OCP.",
-    "72M, hypotensive BP 70/40, central chest pain, diaphoretic, unresponsive to voice.",  # Should trigger escalation
+    "72M, hypotensive BP 70/40, central chest pain, diaphoretic, unresponsive to voice.",
+    "78F, productive cough, fever 38.9, RR 32, BP 85/50, confused, PMH: COPD. No recent antibiotics.",
 ]
 
 
