@@ -400,39 +400,22 @@ with col_output:
             st.markdown('<hr class="output-divider">', unsafe_allow_html=True)
 
             # ASSESSMENT
-            st.markdown(f"""
-            <div class="sbar-section">
-                <div class="sbar-label">Assessment</div>
-                <div class="sbar-content">
-                    <span class="score-badge">{score_name}: {score_value}</span>
-                    <span style="color: #7a8899; font-size: 0.85rem;">{risk_level} risk · {mace_or_prev}</span>
-                    <br><br>
-                    <strong style="color: #9aa8bb;">Recommended action:</strong> {action}
-                    <br><br>
-                    <strong style="color: #9aa8bb;">Drug check:</strong><br>
-                    {result.get('drug_interaction_result', 'Not checked.')}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
+            st.markdown('<div class="sbar-label">Assessment</div>', unsafe_allow_html=True)
+            st.markdown(f'<span class="score-badge">{score_name}: {score_value}</span> **{risk_level} risk** · {mace_or_prev}', unsafe_allow_html=True)
+            st.markdown(f"**Recommended action:** {action}")
+            st.markdown(f"**Drug check:**\n\n{result.get('drug_interaction_result', 'Not checked.')}")
             st.markdown('<hr class="output-divider">', unsafe_allow_html=True)
 
             # RECOMMENDATION
+            st.markdown('<div class="sbar-label">Recommendation</div>', unsafe_allow_html=True)
             recommendation = result.get("final_output", "Not generated.")
-            # Strip the SBAR wrapper if present — we just want the recommendation text
             if "RECOMMENDATION" in recommendation:
                 recommendation = recommendation.split("RECOMMENDATION")[-1].strip()
                 recommendation = recommendation.split("---")[0].strip()
-
-            st.markdown(f"""
-            <div class="sbar-section">
-                <div class="sbar-label">Recommendation</div>
-                <div class="sbar-content">{recommendation}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(recommendation)
 
             # Disclaimer
-            st.markdown(f"""
+            st.markdown("""
             <div class="disclaimer">
                 ⚠ CLINICAL DECISION SUPPORT ONLY · NOT VALIDATED FOR CLINICAL USE ·
                 UK NHS GUIDELINES · NICE CG95 · CLINICAL JUDGEMENT TAKES PRECEDENCE
