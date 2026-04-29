@@ -1,0 +1,26 @@
+# Core agent framework
+langgraph>=0.2.0
+langchain>=0.3.0
+langchain-openai>=0.2.0
+langchain-community>=0.3.0
+
+# RAG pipeline
+llama-index-core>=0.11.0
+llama-index-vector-stores-chroma>=0.2.0
+llama-index-embeddings-openai>=0.2.0
+
+# Vector store
+chromadb>=0.5.0
+
+# PDF ingestion
+pypdf>=4.0.0
+
+# External APIs
+requests>=2.32.0
+
+# Frontend
+streamlit>=1.39.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.0.0
