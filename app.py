@@ -8,6 +8,14 @@ Run with: streamlit run app.py
 import streamlit as st
 from agent.graph import build_graph
 
+import os
+from rag.ingest import build_vector_store, load_vector_store
+
+# Build vector store on first run if it doesn't exist
+if not os.path.exists("./chroma_db") or not os.listdir("./chroma_db"):
+    with st.spinner("Building guideline index for first use — this takes a minute..."):
+        build_vector_store()
+
 # ---------------------------------------------------------------------------
 # Page config
 # ---------------------------------------------------------------------------
